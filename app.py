@@ -18,7 +18,7 @@ app = Flask(__name__)
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_DIR = os.path.join(BASE_DIR, "database")
@@ -44,13 +44,16 @@ if GEMINI_API_KEY:
 
 
 # =========================================================
-# GEMINI RETRY HELPER
+# GEMINI REQUEST HELPER
 # =========================================================
 
-def generate_gemini_content(contents, max_retries=3):
-    """Call Gemini and retry temporary 503/429 errors."""
-    if not client:
-        raise RuntimeError("Gemini API client is not configured.")
+def generate_gemini_response(contents):
+    """
+    Call Gemini with limited retry handling.
+    Retry only temporary 503 availability errors.
+    Do not blindly retry 429 quota errors.
+    """
+    max_retries = 3
 
     for attempt in range(max_retries):
         try:
@@ -60,27 +63,20 @@ def generate_gemini_content(contents, max_retries=3):
             )
 
         except Exception as e:
-            error_text = str(e).upper()
+            error_text = str(e)
 
-            is_temporary_error = (
-                "503" in error_text
-                or "UNAVAILABLE" in error_text
-                or "429" in error_text
-                or "RESOURCE_EXHAUSTED" in error_text
-                or "TOO MANY REQUESTS" in error_text
-            )
+            if "503" in error_text or "UNAVAILABLE" in error_text:
+                if attempt < max_retries - 1:
+                    wait_time = 3 * (attempt + 1)
+                    print(
+                        f"Gemini temporarily unavailable. "
+                        f"Retrying in {wait_time} seconds..."
+                    )
+                    time.sleep(wait_time)
+                    continue
 
-            if is_temporary_error and attempt < max_retries - 1:
-                wait_time = 3 * (attempt + 1)
-
-                print(
-                    f"Gemini temporarily unavailable. "
-                    f"Retry {attempt + 1}/{max_retries - 1} "
-                    f"in {wait_time} seconds..."
-                )
-
-                time.sleep(wait_time)
-                continue
+            if "429" in error_text or "RESOURCE_EXHAUSTED" in error_text:
+                print("Gemini quota/rate limit reached:", error_text)
 
             raise
 
@@ -157,8 +153,8 @@ def ask():
                 "message": "Gemini API key is not configured."
             }), 500
 
-        response = generate_gemini_content(
-            contents=f"""
+        response = generate_gemini_response(
+            f"""
 You are an AI Study Assistant.
 
 Answer the student's question clearly and accurately.
@@ -383,9 +379,7 @@ Important:
 - Do not repeat questions.
 """
 
-        response = generate_gemini_content(
-            contents=prompt
-        )
+        response = generate_gemini_response(prompt)
 
         raw_response = response.text.strip()
 
