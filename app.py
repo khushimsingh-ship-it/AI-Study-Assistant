@@ -44,6 +44,48 @@ if GEMINI_API_KEY:
 
 
 # =========================================================
+# GEMINI RETRY HELPER
+# =========================================================
+
+def generate_gemini_content(contents, max_retries=3):
+    """Call Gemini and retry temporary 503/429 errors."""
+    if not client:
+        raise RuntimeError("Gemini API client is not configured.")
+
+    for attempt in range(max_retries):
+        try:
+            return client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=contents
+            )
+
+        except Exception as e:
+            error_text = str(e).upper()
+
+            is_temporary_error = (
+                "503" in error_text
+                or "UNAVAILABLE" in error_text
+                or "429" in error_text
+                or "RESOURCE_EXHAUSTED" in error_text
+                or "TOO MANY REQUESTS" in error_text
+            )
+
+            if is_temporary_error and attempt < max_retries - 1:
+                wait_time = 3 * (attempt + 1)
+
+                print(
+                    f"Gemini temporarily unavailable. "
+                    f"Retry {attempt + 1}/{max_retries - 1} "
+                    f"in {wait_time} seconds..."
+                )
+
+                time.sleep(wait_time)
+                continue
+
+            raise
+
+
+# =========================================================
 # DATABASE
 # =========================================================
 
@@ -115,16 +157,8 @@ def ask():
                 "message": "Gemini API key is not configured."
             }), 500
 
-        # Gemini can temporarily return 503 when demand is high.
-        # Retry a few times before returning an error to the frontend.
-        response = None
-        last_error = None
-
-        for attempt in range(3):
-            try:
-                response = client.models.generate_content(
-                    model=GEMINI_MODEL,
-                    contents=f"""
+        response = generate_gemini_content(
+            contents=f"""
 You are an AI Study Assistant.
 
 Answer the student's question clearly and accurately.
@@ -138,26 +172,7 @@ Rules:
 - For technical questions, provide structured explanations.
 - Do not unnecessarily make the answer very long.
 """
-                )
-                break
-            except Exception as e:
-                last_error = e
-                error_text = str(e)
-                print(f"AI CHAT ATTEMPT {attempt + 1}/3 ERROR:", error_text)
-
-                # Retry temporary service/rate-limit errors.
-                if ("503" in error_text or
-                        "UNAVAILABLE" in error_text.upper() or
-                        "429" in error_text or
-                        "RESOURCE_EXHAUSTED" in error_text.upper()):
-                    if attempt < 2:
-                        time.sleep(2 * (attempt + 1))
-                        continue
-
-                raise
-
-        if response is None:
-            raise last_error or RuntimeError("Gemini did not return a response.")
+        )
 
         answer = response.text.strip()
 
@@ -368,8 +383,7 @@ Important:
 - Do not repeat questions.
 """
 
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
+        response = generate_gemini_content(
             contents=prompt
         )
 
