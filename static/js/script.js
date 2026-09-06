@@ -167,7 +167,7 @@ async function askChatQuestion() {
         if (!response.ok) {
 
             answerBox.innerHTML =
-                `<p>❌ ${escapeHtml(data.message || "AI request failed.")}</p>`;
+                `<p>❌ ${escapeHtml(data.message || "AI request failed.")}`;
 
             return;
         }
@@ -359,6 +359,7 @@ function renderQuizQuestion() {
 
     html += `
         <div class="quiz-question">
+
             <h3>
                 ${currentQuestionIndex + 1}.
                 ${escapeHtml(questionText)}
@@ -445,6 +446,7 @@ function nextQuestion() {
 
 // ==========================================
 // QUIZ BUTTONS
+// FIXED: SUBMIT BUTTON ON LAST QUESTION
 // ==========================================
 
 function updateQuizButtons() {
@@ -458,6 +460,9 @@ function updateQuizButtons() {
     const submitButton =
         document.getElementById("submitButton");
 
+    const isLastQuestion =
+        currentQuestionIndex === currentQuiz.length - 1;
+
     if (previousButton) {
 
         previousButton.disabled =
@@ -467,17 +472,27 @@ function updateQuizButtons() {
     if (nextButton) {
 
         nextButton.style.display =
-            currentQuestionIndex === currentQuiz.length - 1
+            isLastQuestion
                 ? "none"
                 : "inline-block";
     }
 
     if (submitButton) {
 
-        submitButton.style.display =
-            currentQuestionIndex === currentQuiz.length - 1
-                ? "inline-block"
-                : "none";
+        if (isLastQuestion) {
+
+            submitButton.classList.remove("hidden");
+
+            submitButton.style.display =
+                "inline-block";
+
+        } else {
+
+            submitButton.classList.add("hidden");
+
+            submitButton.style.display =
+                "none";
+        }
     }
 }
 
@@ -541,21 +556,28 @@ async function submitQuiz() {
 
     if (finalPercentage) {
         finalPercentage.textContent =
-            `${percentage}%`;
+            percentage;
     }
 
     if (resultMessage) {
 
         if (percentage >= 80) {
+
             resultMessage.textContent =
                 "🎉 Excellent performance!";
+
         } else if (percentage >= 60) {
+
             resultMessage.textContent =
                 "👍 Good job! Keep practicing.";
+
         } else if (percentage >= 40) {
+
             resultMessage.textContent =
                 "📚 Keep studying and try again.";
+
         } else {
+
             resultMessage.textContent =
                 "💪 Don't give up. Practice more!";
         }
@@ -608,7 +630,6 @@ async function submitQuiz() {
             "Quiz result saved successfully."
         );
 
-        // IMPORTANT:
         // Refresh dashboard and progress immediately
         await loadDashboardStats();
         await loadProgress();
@@ -845,8 +866,10 @@ async function loadNotes() {
             await response.json();
 
         if (!response.ok) {
+
             notesList.innerHTML =
                 "<p>Unable to load notes.</p>";
+
             return;
         }
 
@@ -1006,8 +1029,10 @@ async function loadDashboardStats() {
             );
 
         if (score) {
+
+            // FIXED: index.html already contains %
             score.textContent =
-                `${data.average ?? 0}%`;
+                data.average ?? 0;
         }
 
         // Progress page
@@ -1037,8 +1062,10 @@ async function loadDashboardStats() {
             );
 
         if (progressAverage) {
+
+            // FIXED: index.html already contains %
             progressAverage.textContent =
-                `${data.average ?? 0}%`;
+                data.average ?? 0;
         }
 
     } catch (error) {
