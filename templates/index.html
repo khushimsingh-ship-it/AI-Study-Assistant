@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Study Assistant</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            🤖 AI Study Assistant
+        </div>
+
+        <div class="nav-item active"
+             onclick="showSection('dashboard', this)">
+            🏠 Dashboard
+        </div>
+
+        <div class="nav-item"
+             onclick="showSection('chat', this)">
+            💬 AI Chat
+        </div>
+
+        <div class="nav-item"
+             onclick="showSection('notes', this)">
+            📝 Study Notes
+        </div>
+
+        <div class="nav-item"
+             onclick="showSection('quiz', this)">
+            🧠 AI Quiz
+        </div>
+
+        <div class="nav-item"
+             onclick="showSection('progress', this)">
+            📊 Progress
+        </div>
+
+        <div class="nav-item"
+             onclick="showSection('settings', this)">
+            ⚙️ Settings
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main">
+
+        <!-- HEADER -->
+
+        <div class="header">
+
+            <div>
+                <h1>AI Study Assistant</h1>
+                <p>Learn smarter with your personal AI study companion.</p>
+            </div>
+
+            <div class="profile">
+                👤 <span id="profileName">Student</span>
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- DASHBOARD -->
+        <!-- ================================================= -->
+
+        <section id="dashboard" class="page-section">
+
+            <div class="page-header">
+
+                <h1>
+                    Welcome, <span id="dashboardName">Student</span> 👋
+                </h1>
+
+                <p>
+                    Your personalized study dashboard.
+                </p>
+
+            </div>
+
+
+            <div class="cards">
+
+                <div class="card">
+
+                    <h3>📝 Study Notes</h3>
+
+                    <p id="dashboardNotes">
+                        0
+                    </p>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>🧠 Quizzes Taken</h3>
+
+                    <p id="dashboardQuizzes">
+                        0
+                    </p>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>⭐ Average Score</h3>
+
+                    <p>
+                        <span id="dashboardScore">0</span>%
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- AI QUESTION -->
+
+            <div class="ai-section">
+
+                <h2>✨ Ask AI Anything</h2>
+
+                <p>
+                    Ask questions about programming, mathematics,
+                    engineering or any study topic.
+                </p>
+
+
+                <div class="chat-box">
+
+                    <input
+                        type="text"
+                        id="question"
+                        placeholder="Ask your study question..."
+                        onkeydown="handleEnter(event)"
+                    >
+
+                    <button onclick="askQuestion()">
+                        Ask AI
+                    </button>
+
+                </div>
+
+
+                <div id="dashboardAnswer"
+                     style="margin-top:20px;">
+                </div>
+
+            </div>
+
+
+            <!-- QUICK ACTIONS -->
+
+            <div class="cards"
+                 style="margin-top:25px;">
+
+                <div class="card"
+                     onclick="showSection('chat')"
+                     style="cursor:pointer;">
+
+                    <h3>💬 AI Chat</h3>
+
+                    <p>
+                        Ask detailed questions to AI.
+                    </p>
+
+                </div>
+
+
+                <div class="card"
+                     onclick="showSection('notes')"
+                     style="cursor:pointer;">
+
+                    <h3>📝 Create Notes</h3>
+
+                    <p>
+                        Save your important study notes.
+                    </p>
+
+                </div>
+
+
+                <div class="card"
+                     onclick="showSection('quiz')"
+                     style="cursor:pointer;">
+
+                    <h3>🧠 Take Quiz</h3>
+
+                    <p>
+                        Generate an AI-powered quiz.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- AI CHAT -->
+        <!-- ================================================= -->
+
+        <section id="chat"
+                 class="page-section hidden">
+
+            <div class="page-header">
+
+                <h1>💬 AI Study Chat</h1>
+
+                <p>
+                    Ask AI questions and get explanations.
+                </p>
+
+            </div>
+
+
+            <div class="ai-section">
+
+                <div class="chat-box">
+
+                    <input
+                        type="text"
+                        id="chatQuestion"
+                        placeholder="Ask AI a question..."
+                        onkeydown="handleEnter(event)"
+                    >
+
+                    <button onclick="askChatQuestion()">
+                        Ask AI
+                    </button>
+
+                </div>
+
+
+                <div id="chatAnswer"
+                     style="margin-top:25px;">
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- NOTES -->
+        <!-- ================================================= -->
+
+        <section id="notes"
+                 class="page-section hidden">
+
+            <div class="page-header">
+
+                <h1>📝 Study Notes</h1>
+
+                <p>
+                    Create and manage your personal study notes.
+                </p>
+
+            </div>
+
+
+            <div class="notes-container">
+
+                <!-- CREATE NOTE -->
+
+                <div class="card">
+
+                    <h2 class="section-title">
+                        Create New Note
+                    </h2>
+
+
+                    <input
+                        type="text"
+                        id="noteTitle"
+                        class="form-input"
+                        placeholder="Note title"
+                    >
+
+
+                    <br><br>
+
+
+                    <textarea
+                        id="noteContent"
+                        class="form-textarea"
+                        placeholder="Write your study notes here..."
+                    ></textarea>
+
+
+                    <br><br>
+
+
+                    <button
+                        class="primary-button"
+                        onclick="saveNote()">
+
+                        💾 Save Note
+
+                    </button>
+
+
+                    <div id="noteMessage"></div>
+
+                </div>
+
+
+                <!-- SAVED NOTES -->
+
+                <div>
+
+                    <h2 class="section-title">
+                        Saved Notes
+                    </h2>
+
+                    <div id="notesList">
+
+                        <div class="card">
+                            No notes yet.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- QUIZ -->
+        <!-- ================================================= -->
+
+        <section id="quiz"
+                 class="page-section hidden">
+
+            <div class="page-header">
+
+                <h1>🧠 AI Quiz Generator</h1>
+
+                <p>
+                    Generate an AI-powered quiz on any topic.
+                </p>
+
+            </div>
+
+
+            <!-- QUIZ SETUP -->
+
+            <div id="quizSetup"
+                 class="card">
+
+                <h2>
+                    Create Your Quiz
+                </h2>
+
+
+                <br>
+
+
+                <label>
+                    Topic
+                </label>
+
+
+                <br><br>
+
+
+                <input
+                    type="text"
+                    id="quizTopic"
+                    class="form-input"
+                    placeholder="Example: Python, DBMS, Java..."
+                >
+
+
+                <br><br>
+
+
+                <label>
+                    Number of Questions
+                </label>
+
+
+                <br><br>
+
+
+                <select
+                    id="quizNumber"
+                    class="form-input">
+
+                    <option value="5">
+                        5 Questions
+                    </option>
+
+                    <option value="10">
+                        10 Questions
+                    </option>
+
+                    <option value="15">
+                        15 Questions
+                    </option>
+
+                </select>
+
+
+                <br><br>
+
+
+                <button
+                    class="primary-button"
+                    onclick="generateQuiz()">
+
+                    ✨ Generate AI Quiz
+
+                </button>
+
+
+                <div id="quizMessage"
+                     style="margin-top:15px;">
+                </div>
+
+            </div>
+
+
+
+            <!-- QUIZ AREA -->
+
+            <div id="quizArea"
+                 class="hidden">
+
+                <div class="card">
+
+                    <div class="page-header">
+
+                        <h2>
+                            Quiz: <span id="quizTopicDisplay"></span>
+                        </h2>
+
+                        <p>
+                            Question
+                            <span id="currentQuestion">1</span>
+                            of
+                            <span id="totalQuestions">5</span>
+                        </p>
+
+                    </div>
+
+
+                    <div id="quizQuestions">
+
+                    </div>
+
+
+                    <div
+                        style="
+                        display:flex;
+                        justify-content:space-between;
+                        margin-top:25px;
+                        gap:10px;
+                        ">
+
+                        <button
+                            id="previousButton"
+                            class="primary-button"
+                            onclick="previousQuestion()">
+
+                            ← Previous
+
+                        </button>
+
+
+                        <button
+                            id="nextButton"
+                            class="primary-button"
+                            onclick="nextQuestion()">
+
+                            Next →
+
+                        </button>
+
+
+                        <button
+                            id="submitButton"
+                            class="primary-button hidden"
+                            onclick="submitQuiz()">
+
+                            Submit Quiz
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- QUIZ RESULT -->
+
+            <div id="quizResult"
+                 class="hidden">
+
+                <div class="card">
+
+                    <h2>
+                        🎉 Quiz Completed!
+                    </h2>
+
+
+                    <br>
+
+
+                    <h1>
+                        Score:
+                        <span id="finalScore">
+                            0
+                        </span>
+                    </h1>
+
+
+                    <h2>
+                        <span id="finalPercentage">
+                            0
+                        </span>%
+                    </h2>
+
+
+                    <p id="resultMessage">
+                    </p>
+
+
+                    <br>
+
+
+                    <h3>
+                        Answer Review
+                    </h3>
+
+
+                    <div id="answerReview"
+                         style="margin-top:15px;">
+                    </div>
+
+
+                    <br>
+
+
+                    <button
+                        class="primary-button"
+                        onclick="restartQuiz()">
+
+                        🔄 Take Another Quiz
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- PROGRESS -->
+        <!-- ================================================= -->
+
+        <section id="progress"
+                 class="page-section hidden">
+
+            <div class="page-header">
+
+                <h1>📊 Study Progress</h1>
+
+                <p>
+                    Track your learning activity and quiz performance.
+                </p>
+
+            </div>
+
+
+            <div class="cards">
+
+                <div class="card">
+
+                    <h3>
+                        📝 Total Notes
+                    </h3>
+
+                    <p id="progressNotes">
+                        0
+                    </p>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>
+                        🧠 Total Quizzes
+                    </h3>
+
+                    <p id="progressQuizzes">
+                        0
+                    </p>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>
+                        ⭐ Average Score
+                    </h3>
+
+                    <p>
+                        <span id="progressAverage">
+                            0
+                        </span>%
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <h2>
+                    Quiz History
+                </h2>
+
+
+                <br>
+
+
+                <div id="quizHistory">
+
+                    <p>
+                        No quiz history available.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- SETTINGS -->
+        <!-- ================================================= -->
+
+        <section id="settings"
+                 class="page-section hidden">
+
+            <div class="page-header">
+
+                <h1>⚙️ Settings</h1>
+
+                <p>
+                    Customize your student profile.
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <h2>
+                    Student Profile
+                </h2>
+
+
+                <br>
+
+
+                <label>
+                    Student Name
+                </label>
+
+
+                <br><br>
+
+
+                <input
+                    type="text"
+                    id="studentName"
+                    class="form-input"
+                    placeholder="Enter your name"
+                >
+
+
+                <br><br>
+
+
+                <label>
+                    Course
+                </label>
+
+
+                <br><br>
+
+
+                <input
+                    type="text"
+                    id="studentCourse"
+                    class="form-input"
+                    placeholder="Example: Computer Engineering"
+                >
+
+
+                <br><br>
+
+
+                <label>
+                    College
+                </label>
+
+
+                <br><br>
+
+
+                <input
+                    type="text"
+                    id="studentCollege"
+                    class="form-input"
+                    placeholder="Enter your college"
+                >
+
+
+                <br><br>
+
+
+                <button
+                    class="primary-button"
+                    onclick="saveSettings()">
+
+                    💾 Save Settings
+
+                </button>
+
+
+                <div id="settingsMessage"
+                     style="margin-top:15px;">
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ================================================= -->
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+</html>
