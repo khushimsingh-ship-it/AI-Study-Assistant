@@ -6,6 +6,7 @@ import sqlite3
 import os
 import json
 import re
+import time
 
 
 # =========================================================
@@ -17,7 +18,7 @@ app = Flask(__name__)
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_DIR = os.path.join(BASE_DIR, "database")
@@ -114,9 +115,16 @@ def ask():
                 "message": "Gemini API key is not configured."
             }), 500
 
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=f"""
+        # Gemini can temporarily return 503 when demand is high.
+        # Retry a few times before returning an error to the frontend.
+        response = None
+        last_error = None
+
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(
+                    model=GEMINI_MODEL,
+                    contents=f"""
 You are an AI Study Assistant.
 
 Answer the student's question clearly and accurately.
@@ -130,7 +138,26 @@ Rules:
 - For technical questions, provide structured explanations.
 - Do not unnecessarily make the answer very long.
 """
-        )
+                )
+                break
+            except Exception as e:
+                last_error = e
+                error_text = str(e)
+                print(f"AI CHAT ATTEMPT {attempt + 1}/3 ERROR:", error_text)
+
+                # Retry temporary service/rate-limit errors.
+                if ("503" in error_text or
+                        "UNAVAILABLE" in error_text.upper() or
+                        "429" in error_text or
+                        "RESOURCE_EXHAUSTED" in error_text.upper()):
+                    if attempt < 2:
+                        time.sleep(2 * (attempt + 1))
+                        continue
+
+                raise
+
+        if response is None:
+            raise last_error or RuntimeError("Gemini did not return a response.")
 
         answer = response.text.strip()
 
